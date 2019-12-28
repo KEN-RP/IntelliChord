@@ -22,8 +22,8 @@ public class MidiImportManager {
 		// 1拍は480tick 1拍は60/BPM秒なので10tick = 1250/BPM[ms]
 
 		int bpm = 142;
-		ArrayList<Integer> chords = new ArrayList<>();
 		ArrayList<boolean[]> chordsBool = new ArrayList<>();
+		ArrayList<boolean[]> firstNotes = new ArrayList<>();
 		int trackNumber = 0;
 		ArrayList<ArrayList<String>> melody = new ArrayList<>();
 		ArrayList<ArrayList<Integer>> noteDurations = new ArrayList<>();
@@ -47,17 +47,27 @@ public class MidiImportManager {
 						note = key % 12;
 						noteName = NOTE_NAMES[note];
 						onTime = event.getTick();
-						if (chords.size() > (int) (onTime / 1920l)) {//十分
-							chords.set((int) (onTime / 1920l),
-							        chords.get((int) (onTime / 1920l)) + (int) Math.pow(2, note));
+						if (chordsBool.size() > (int) (onTime / 1920l)) {//十分
 							boolean[] tmp = chordsBool.get((int) (onTime / 1920l));
 							tmp[note] = true;
 							chordsBool.set((int) (onTime / 1920l), tmp);
 						} else {//足りない
-							chords.add((int) Math.pow(2, note));
 							boolean[] tmp = new boolean[12];
 							tmp[note] = true;
 							chordsBool.add(tmp);
+						}
+						if (firstNotes.size() > (int) (onTime / 1920l)) {//十分
+							boolean[] tmp = firstNotes.get((int) (onTime / 1920l));
+							if (onTime % 1920 == 0) {
+								tmp[note] = true;
+							}
+							firstNotes.set((int) (onTime / 1920l), tmp);
+						} else {//足りない
+							boolean[] tmp = new boolean[12];
+							if (onTime % 1920 == 0) {
+								tmp[note] = true;
+							}
+							firstNotes.add(tmp);
 						}
 						if (onTime - offTime != 0) {
 							System.out.print(offTime + " A0 " + (onTime - offTime));
@@ -80,12 +90,18 @@ public class MidiImportManager {
 			noteDurations.add(tmpd);
 		}
 		System.out.println();
-		for (int i = 0; i < chords.size(); i++) {
-			System.out.println(chords.get(i));
-		}
-		System.out.println();
-		for (int i = 0; i < chords.size(); i++) {
-			System.out.println(Arrays.toString(chordsBool.get(i)));
+		for (int i = 0; i < firstNotes.size(); i++) {
+			boolean[] tmp = firstNotes.get(i);
+			//System.out.println(Arrays.toString(firstNotes.get(i)));
+			for (int j = 0; j < 12; j++) {
+				if (tmp[j]) {
+					System.out.println(NOTE_NAMES[j]);
+					break;
+				}
+				if (j == 11) {
+					System.out.println("NO");
+				}
+			}
 		}
 		System.out.println(melody);
 		System.out.println(noteDurations);
